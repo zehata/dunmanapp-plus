@@ -501,6 +501,11 @@ select:focus {
 			margin-top: 15px;
 			cursor: pointer;
 		}
+		.targetscont{
+			padding:15px;
+			height: fit-content;
+			width: calc(100% - 30px);
+		}
 	</style>
 </head>
 <body onload="updatecontentwidth();">
@@ -584,6 +589,78 @@ select:focus {
 			});
 		}
 
+		function currentTargetsAdaptor(app, appid){
+			if(appsversion.hasOwnProperty("eligibility")){
+				if(appsversion["eligibility"].hasOwnProperty(appid)){
+					var eligibles = appsversion["eligibility"][appid];
+					console.log(eligibles)
+					if (eligibles["Y1"]){
+						document.getElementById("targets1"+appid).checked = true;
+					} 
+
+					if (eligibles["Y2"]){
+						document.getElementById("targets2"+appid).checked = true;
+					} 
+
+					if (eligibles["Y3"]){
+						document.getElementById("targets3"+appid).checked = true;
+					} 
+
+					if (eligibles["Y4"]){
+						document.getElementById("targets4"+appid).checked = true;
+					} 
+
+					if (eligibles["Y5"]){
+						document.getElementById("targets5"+appid).checked = true;
+					} 
+
+					if (eligibles["Y6"]){
+						document.getElementById("targets6"+appid).checked = true;
+					} 
+
+					if (eligibles["Staff"]){
+						document.getElementById("targets7"+appid).checked = true;
+					} 
+
+					if (eligibles["others"]){
+						document.getElementById("targets8"+appid).checked = true;
+					}
+
+					var specppl = eligibles.specppl;
+					if(specppl){
+						document.getElementById('specppl'+appid).innerHTML = (specppl.join("\n"));
+					}
+				}
+			}
+		}
+
+		function isNotYblank(name){
+			return !(name == "Y1" || name == "Y2" || name == "Y3" || name == "Y4" || name == "Y5" || name == "Y6" || name == "Y7" || name == "Y8");
+		}
+
+		function targetchange(box, appid){
+			var boxname = "Y"+box;
+			if(box == 7){
+				boxname = "Staff";
+			} else if (box == 8){
+				boxname = "others"
+			}
+			var data = document.getElementById('targets'+box+appid).checked;
+			systemtransactdata(appid, boxname, data)
+		}
+
+		function specpplchange(app, appid){
+			var names = ((document.getElementById('specppl'+appid).value).replace(new RegExp("\\.","g"),"?")).replace(/\s+/g, '');
+			var namearray = names.split(',');
+			systemtransactdata(appid, "specppl", namearray);
+		}
+
+		function systemtransactdata(id,box,data){
+			firebase.database().ref('/appsversion/eligibility/'+id+'/'+box+'/').transaction(function(currentData){
+				return data;
+			});
+		}
+
 		function selectappcardnavbtn(app,btn){
 			for(var i = 0; i < 4; i++){
 				document.getElementById("appcardnavbtns"+app+['a','b','c','d'][i]).style.backgroundColor="rgb(47, 116, 179)";
@@ -594,7 +671,10 @@ select:focus {
 			document.getElementById('appcardcontent'+app).innerHTML = "";
 
 			if(btn == 'a'){
-				document.getElementById('appcardcontent'+app).innerHTML = "<div style='padding:15px;'><div>App name: "+appidnamemap[appids[app]]+"</div><div>Latest version number: "+versionnumbers[app][0]+"</div><div>Activated version number: "+versionnumbers[app][1]+"</div><div>Saved to users' devices: "+saved[app]+"</div><div>Activated and displayed on users' devices: "+activated[app]+"</div></div>";
+				document.getElementById('appcardcontent'+app).innerHTML = "<div style='padding:15px;'><div>App name: "+appidnamemap[appids[app]]+"</div><div>Latest version number: "+versionnumbers[app][0]+"</div><div>Activated version number: "+versionnumbers[app][1]+"</div><div>Saved to users' devices: "+saved[app]+"</div><div>Activated and displayed on users' devices: "+activated[app]+"</div></div><div class=\"targetscont\" id=\"targetscont"+app+"\"></div>";
+				// Now we need to create the appropriate checkboxes
+				document.getElementById("targetscont"+app).innerHTML = "<div>Save to users devices: </div><div><input onchange=\"targetchange(1,'"+appids[app]+"')\" id=\"targets1"+appids[app]+"\" type=\"checkbox\"></input>Y1</div><div><input onchange=\"targetchange(2,'"+appids[app]+"')\" id=\"targets2"+appids[app]+"\" type=\"checkbox\"></input>Y2</div><div><input onchange=\"targetchange(3,'"+appids[app]+"')\" id=\"targets3"+appids[app]+"\" type=\"checkbox\"></input>Y3</div><div><input onchange=\"targetchange(4,'"+appids[app]+"')\" id=\"targets4"+appids[app]+"\" type=\"checkbox\"></input>Y4</div><div><input onchange=\"targetchange(5,'"+appids[app]+"')\" id=\"targets5"+appids[app]+"\" type=\"checkbox\"></input>Y5</div><div><input  onchange=\"targetchange(6,'"+appids[app]+"')\" id=\"targets6"+appids[app]+"\" type=\"checkbox\"></input>Y6</div><div><input  onchange=\"targetchange(7,'"+appids[app]+"')\" id=\"targets7"+appids[app]+"\" type=\"checkbox\"></input>Staff</div><div><input  onchange=\"targetchange(8,'"+appids[app]+"')\" id=\"targets8"+appids[app]+"\" type=\"checkbox\"></input>Others</div><div>Specific people</div><textarea onchange=\"specpplchange('"+app+"', '"+appids[app]+"')\" id=\"specppl"+appids[app]+"\" rows=\"5\" cols=\"30\"></textarea>";
+				currentTargetsAdaptor(app, appids[app]);
 			}
 
 			if(btn == 'b'){
@@ -832,14 +912,14 @@ select:focus {
 	var activated = [];
 	var appsstorage = {};
 	var adminraw = {};
+	var appsversion = {};
 
 	var enableadvanced = false;
 
 	function populate(){
 		database.ref().on("value",function(snapshot){
 			var all = snapshot.val();
-			console.log(all)
-			var appsversionraw = all.appsversion;
+			appsversion = all.appsversion;
 			var apps = all.apps;
 	        adminraw = all.admins;
 	        var applist = all.appsversion.applist;
@@ -852,7 +932,7 @@ select:focus {
 	                	if(adminraw[objectedpreapps[j][0]][convertedusername] != 3 && adminraw[objectedpreapps[j][0]][convertedusername] != 6){
 	                		enableadvanced = true;
 	                	}
-	                	versionnumbers.push([objectedpreapps[j][1].version,appsversionraw[objectedpreapps[j][0]]])
+	                	versionnumbers.push([objectedpreapps[j][1].version,appsversion[objectedpreapps[j][0]]])
 	                	var appactivated = false;
 	                	for(var k = 0; k < applist.length; k++){
 	                		if (applist[k][2] == objectedpreapps[j][0]){
