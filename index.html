@@ -593,7 +593,6 @@ select:focus {
 			if(appsversion.hasOwnProperty("eligibility")){
 				if(appsversion["eligibility"].hasOwnProperty(appid)){
 					var eligibles = appsversion["eligibility"][appid];
-					console.log(eligibles)
 					if (eligibles["Y1"]){
 						document.getElementById("targets1"+appid).checked = true;
 					} 
@@ -656,9 +655,32 @@ select:focus {
 		}
 
 		function systemtransactdata(id,box,data){
-			firebase.database().ref('/appsversion/eligibility/'+id+'/'+box+'/').transaction(function(currentData){
+			database.ref('/appsversion/eligibility/'+id+'/'+box+'/').transaction(function(currentData){
 				return data;
 			});
+			database.ref('/appsversion/CurrentVersion/').once("value",function(snapshot){
+				var data = Number(snapshot.val()) + 1;
+				database.ref('/appsversion/CurrentVersion/').transaction(function(currentData){
+					return data;
+				});
+			});
+		}
+
+		function activatechange(appid){
+			var data = document.getElementById('activated'+appid).checked;
+			database.ref('/appsversion/activation/'+appid+'/').transaction(function(currentData){
+				return data;
+			});
+			database.ref('/appsversion/CurrentVersion/').once("value",function(snapshot){
+				var data = Number(snapshot.val()) + 1;
+				database.ref('/appsversion/CurrentVersion/').transaction(function(currentData){
+					return data;
+				});
+			});
+		}
+
+		function activatedornot(appid){
+			document.getElementById('activated'+appid).checked = appsversion["activation"][appid];
 		}
 
 		function selectappcardnavbtn(app,btn){
@@ -671,10 +693,14 @@ select:focus {
 			document.getElementById('appcardcontent'+app).innerHTML = "";
 
 			if(btn == 'a'){
-				document.getElementById('appcardcontent'+app).innerHTML = "<div style='padding:15px;'><div>App name: "+appidnamemap[appids[app]]+"</div><div>Latest version number: "+versionnumbers[app][0]+"</div><div>Activated version number: "+versionnumbers[app][1]+"</div><div>Saved to users' devices: "+saved[app]+"</div><div>Activated and displayed on users' devices: "+activated[app]+"</div></div><div class=\"targetscont\" id=\"targetscont"+app+"\"></div>";
+				document.getElementById('appcardcontent'+app).innerHTML = "<div style='padding:15px;'><div>App name: "+appidnamemap[appids[app]]+"</div><div>Latest version number: "+versionnumbers[app][0]+"</div><div>Activated version number: "+versionnumbers[app][1]+"</div><div>Saved to users' devices: "+saved[app]+"</div><div>Activated and displayed on users' devices: "+activated[app]+"</div></div><div class=\"targetscont\" id=\"targetscont"+app+"\"></div><div style='padding:15px;'><div>Activated</div><input onchange=\"activatechange('"+appids[app]+"')\" id=\"activated"+appids[app]+"\" type=\"checkbox\"></input></div>";
 				// Now we need to create the appropriate checkboxes
 				document.getElementById("targetscont"+app).innerHTML = "<div>Save to users devices: </div><div><input onchange=\"targetchange(1,'"+appids[app]+"')\" id=\"targets1"+appids[app]+"\" type=\"checkbox\"></input>Y1</div><div><input onchange=\"targetchange(2,'"+appids[app]+"')\" id=\"targets2"+appids[app]+"\" type=\"checkbox\"></input>Y2</div><div><input onchange=\"targetchange(3,'"+appids[app]+"')\" id=\"targets3"+appids[app]+"\" type=\"checkbox\"></input>Y3</div><div><input onchange=\"targetchange(4,'"+appids[app]+"')\" id=\"targets4"+appids[app]+"\" type=\"checkbox\"></input>Y4</div><div><input onchange=\"targetchange(5,'"+appids[app]+"')\" id=\"targets5"+appids[app]+"\" type=\"checkbox\"></input>Y5</div><div><input  onchange=\"targetchange(6,'"+appids[app]+"')\" id=\"targets6"+appids[app]+"\" type=\"checkbox\"></input>Y6</div><div><input  onchange=\"targetchange(7,'"+appids[app]+"')\" id=\"targets7"+appids[app]+"\" type=\"checkbox\"></input>Staff</div><div><input  onchange=\"targetchange(8,'"+appids[app]+"')\" id=\"targets8"+appids[app]+"\" type=\"checkbox\"></input>Others</div><div>Specific people</div><textarea onchange=\"specpplchange('"+app+"', '"+appids[app]+"')\" id=\"specppl"+appids[app]+"\" rows=\"5\" cols=\"30\"></textarea>";
-				currentTargetsAdaptor(app, appids[app]);
+				database.ref('/appsversion/').on("value", function(snapshot){
+					appsversion = snapshot.val();
+					currentTargetsAdaptor(app, appids[app]);
+					activatedornot(appids[app]);
+				});
 			}
 
 			if(btn == 'b'){
