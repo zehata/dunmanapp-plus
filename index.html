@@ -627,7 +627,7 @@ select:focus {
 
 					var specppl = eligibles.specppl;
 					if(specppl){
-						document.getElementById('specppl'+appid).innerHTML = (specppl.join("\n"));
+						document.getElementById('specppl'+appid).innerHTML = (specppl.join("\n")).replace(new RegExp("\\?","g"),".");
 					}
 				}
 			}
@@ -667,10 +667,17 @@ select:focus {
 		}
 
 		function activatechange(appid){
-			var data = document.getElementById('activated'+appid).checked;
-			database.ref('/appsversion/activation/'+appid+'/').transaction(function(currentData){
-				return data;
-			});
+			if(document.getElementById('activated'+appid).checked){
+				var data = [appidnamemap[appid] ,true];
+				database.ref('/appsversion/activation/'+appid+'/').transaction(function(currentData){
+					return data;
+				});
+			} else {
+				var data = {};
+				database.ref('/appsversion/activation/'+appid+'/').transaction(function(currentData){
+					return data;
+				});
+			}
 			database.ref('/appsversion/CurrentVersion/').once("value",function(snapshot){
 				var data = Number(snapshot.val()) + 1;
 				database.ref('/appsversion/CurrentVersion/').transaction(function(currentData){
@@ -680,7 +687,9 @@ select:focus {
 		}
 
 		function activatedornot(appid){
-			document.getElementById('activated'+appid).checked = appsversion["activation"][appid];
+			if(appsversion["activation"].hasOwnProperty(appid)){
+				document.getElementById('activated'+appid).checked = appsversion["activation"][appid][1];
+			}
 		}
 
 		function selectappcardnavbtn(app,btn){
