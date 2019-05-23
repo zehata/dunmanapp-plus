@@ -627,7 +627,7 @@ select:focus {
 
 					var specppl = eligibles.specppl;
 					if(specppl){
-						document.getElementById('specppl'+appid).innerHTML = (specppl.join("\n")).replace(new RegExp("\\?","g"),".");
+						document.getElementById('specppl'+appid).innerHTML = (specppl.join(", \n")).replace(new RegExp("\\?","g"),".");
 					}
 				}
 			}
