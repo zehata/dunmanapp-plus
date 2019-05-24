@@ -804,6 +804,10 @@ select:focus {
 			recommendationtimes[app] = false;
 			database.ref('reccards/algo/').update({[appids[app]]:[recommendationtimes[app],priorities[app]]});
 		}
+		database.ref('/reccards/algo/version/').once("value", function(snapshot){
+			var versionnumber = Number(snapshot.val()) + 1;
+			database.ref('reccards/algo/').update({"version":versionnumber});
+		});
 	}
 
 	var recommendationtimes = [];
