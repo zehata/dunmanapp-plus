@@ -916,8 +916,14 @@ select:focus {
 	}
 
 	function savepriorities(app){
-		priorities[app] = document.getElementById('priority'+app).value;
+		priorities[app] = Number(document.getElementById('priority'+app).value);
 		database.ref('reccards/algo/').update({[appids[app]]:[recommendationtimes[app],priorities[app]]});
+		database.ref('/appsversion/CurrentVersion/').once("value",function(snapshot){
+			var data = Number(snapshot.val()) + 1;
+			database.ref('/appsversion/CurrentVersion/').transaction(function(currentData){
+				return data;
+			});
+		});
 	}
 
 	function savetime(app,time){
